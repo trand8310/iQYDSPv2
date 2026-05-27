@@ -639,9 +639,9 @@ namespace MainClient.UiTask
                 var globalStats = new AdTrafficTaskStateEntity();
                 if (resp != null)
                 {
-                    globalStats.Start = resp.SelectToken("data.start")?.Value<long>() ?? 0;
-                    globalStats.DSP = resp.SelectToken("data.dsp")?.Value<long>() ?? 0;
-                    globalStats.Clickthrough = resp.SelectToken("data.click")?.Value<long>() ?? 0;
+                    globalStats.Start = resp.SelectToken("data.start")?.GetValue<long>() ?? 0;
+                    globalStats.DSP = resp.SelectToken("data.dsp")?.GetValue<long>() ?? 0;
+                    globalStats.Clickthrough = resp.SelectToken("data.click")?.GetValue<long>() ?? 0;
                 }
 
                 _taskGlobalBaseline[key] = globalStats;

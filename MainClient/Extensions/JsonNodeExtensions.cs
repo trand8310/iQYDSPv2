@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Newtonsoft.Json.Linq;
 
 
@@ -16,7 +15,7 @@ internal static class JTokenExtensions
 
         try
         {
-            return node.Deserialize<T>();
+            return node.ToObject<T>();
         }
         catch
         {
@@ -24,6 +23,29 @@ internal static class JTokenExtensions
         }
     }
 
+
+
+    public static T? GetValue<T>(this JToken? node)
+    {
+        if (node is null)
+        {
+            return default;
+        }
+
+        try
+        {
+            return node.ToObject<T>();
+        }
+        catch
+        {
+            return default;
+        }
+    }
+
+    public static string ToJsonString(this JToken? node)
+    {
+        return node?.ToString(Newtonsoft.Json.Formatting.None) ?? string.Empty;
+    }
 
     public static IEnumerable<JToken> Children(this JToken? node)
     {
@@ -34,7 +56,7 @@ internal static class JTokenExtensions
 
         if (node is JObject obj)
         {
-            return obj.Select(x => x.Value).Where(x => x is not null).Select(x => x!);
+            return obj.Properties().Select(x => x.Value).Where(x => x is not null).Select(x => x!);
         }
 
         return Enumerable.Empty<JToken>();

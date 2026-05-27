@@ -1,5 +1,6 @@
 ﻿using MainClient.Common;
 using MainClient.Infrastructure;
+using MainClient.Extensions;
 using MainClient.Ipc;
 using MainClient.Logging;
 using MainClient.LogViewer;
