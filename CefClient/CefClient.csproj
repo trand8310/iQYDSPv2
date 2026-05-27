@@ -33,6 +33,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="CefSharp.WinForms.NetCore" Version="126.2.180" />
+			<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
 	</ItemGroup>
 
 

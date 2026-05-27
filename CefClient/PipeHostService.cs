@@ -1,17 +1,13 @@
 ﻿using System.IO.Pipes;
 using System.Collections.Concurrent;
 using System.Text;
-using System.Text.Json;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace CefClient;
 
 public sealed class PipeHostService : IAsyncDisposable
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-    };
-
     private readonly string _pipeName;
     private readonly MainForm _mainForm;
     private readonly CancellationTokenSource _cts = new();
@@ -23,7 +19,7 @@ public sealed class PipeHostService : IAsyncDisposable
     private readonly ConcurrentDictionary<string, Task> _runTasks = new();
 
     private string? _taskId;
-    private System.Text.Json.Nodes.JsonNode? _taskPayload;
+    private JToken? _taskPayload;
 
     public PipeHostService(string pipeName, MainForm mainForm)
     {
@@ -67,7 +63,7 @@ public sealed class PipeHostService : IAsyncDisposable
             PipeEnvelope? req;
             try
             {
-                req = JsonSerializer.Deserialize<PipeEnvelope>(line, JsonOptions);
+                req = JsonConvert.DeserializeObject<PipeEnvelope>(line);
             }
             catch
             {
@@ -188,7 +184,7 @@ public sealed class PipeHostService : IAsyncDisposable
             try
             {
                 await _mainForm.RemoveBrowserFastAsync(browserId);
-                var dataObj = result.Data as System.Text.Json.Nodes.JsonObject ?? new System.Text.Json.Nodes.JsonObject();
+                var dataObj = result.Data as JObject ?? new JObject();
                 dataObj["removedByCefClient"] = true;
                 result.Data = dataObj;
                 await SendBrowserStatusAsync(
@@ -201,7 +197,7 @@ public sealed class PipeHostService : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                var dataObj = result.Data as System.Text.Json.Nodes.JsonObject ?? new System.Text.Json.Nodes.JsonObject();
+                var dataObj = result.Data as JObject ?? new JObject();
                 dataObj["removedByCefClient"] = false;
                 dataObj["removeError"] = ex.Message;
                 result.Data = dataObj;
@@ -301,9 +297,9 @@ public sealed class PipeHostService : IAsyncDisposable
         bool success,
         string message,
         CancellationToken cancellationToken,
-        System.Text.Json.Nodes.JsonNode? data = null)
+        JToken? data = null)
     {
-        var statusData = data as System.Text.Json.Nodes.JsonObject ?? new System.Text.Json.Nodes.JsonObject();
+        var statusData = data as JObject ?? new JObject();
         statusData["stage"] = stage;
 
         await SendAsync(new PipeEnvelope
@@ -322,7 +318,11 @@ public sealed class PipeHostService : IAsyncDisposable
         if (_writer == null)
             throw new InvalidOperationException("未启动");
 
-        var json = JsonSerializer.Serialize(envelope, JsonOptions);
+        var json = JsonConvert.SerializeObject(envelope, new JsonSerializerSettings
+        {
+            ContractResolver = new Newtonsoft.Json.Serialization.CamelCasePropertyNamesContractResolver(),
+            NullValueHandling = NullValueHandling.Ignore
+        });
 
         await _writeLock.WaitAsync(cancellationToken);
         try

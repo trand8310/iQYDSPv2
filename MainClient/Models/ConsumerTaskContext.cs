@@ -1,4 +1,4 @@
-using System.Text.Json.Nodes;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +18,7 @@ namespace MainClient.Models
 
         public string? ProxyServer { get; set; }
         public string RealIp { get; set; } = string.Empty;
-        public JsonObject? IpInfo { get; set; }
+        public JObject? IpInfo { get; set; }
 
         public DateTime StartTime { get; set; } = DateTime.Now;
         public string TaskTitle { get; set; } = string.Empty;

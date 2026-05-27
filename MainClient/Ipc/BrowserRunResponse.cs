@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.Json.Nodes;
+using Newtonsoft.Json.Linq;
 using System.Threading.Tasks;
 
 namespace MainClient.Ipc
@@ -11,6 +11,6 @@ namespace MainClient.Ipc
     {
         public bool Success { get; set; }
         public string Message { get; set; } = "";
-        public JsonNode? Data { get; set; }
+        public JToken? Data { get; set; }
     }
 }
