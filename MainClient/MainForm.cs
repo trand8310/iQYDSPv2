@@ -7,7 +7,7 @@ using MainClient.Models;
 using MainClient.UiTask;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
-using System.Text.Json.Nodes;
+using Newtonsoft.Json.Linq;
 using Serilog.Events;
 using System.Collections.Concurrent;
 using System.Management;
@@ -45,7 +45,7 @@ namespace MainClient
 
 
         #region 任务调度
-        private PipelineRunner<JsonNode>? _pipeline;
+        private PipelineRunner<JToken>? _pipeline;
         private UiTaskRunner? _uiRunner;
         private AppAutoRestart? _appAutoRestart;
         private readonly AdTrafficAggregator _aggregator;
@@ -314,7 +314,7 @@ namespace MainClient
         /// <param name="writer"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        private async Task ProducerAsync(ChannelWriter<JsonNode> writer, CancellationToken token)
+        private async Task ProducerAsync(ChannelWriter<JToken> writer, CancellationToken token)
         {
             Exception? completionError = null;
 
@@ -332,11 +332,11 @@ namespace MainClient
                         continue;
                     }
 
-                    JsonArray? data;
+                    JArray? data;
                     try
                     {
-                        var json = JsonNode.Parse(res);
-                        data = json["data"] as JsonArray;
+                        var json = JToken.Parse(res);
+                        data = json["data"] as JArray;
                     }
                     catch (JsonException)
                     {
@@ -361,7 +361,7 @@ namespace MainClient
                             if (!await writer.WaitToWriteAsync(token))
                                 return;
 
-                            await writer.WriteAsync(item?.DeepClone() ?? new JsonObject(), token);
+                            await writer.WriteAsync(item?.DeepClone() ?? new JObject(), token);
                             totalEnqueued++;
                         }
                     }
@@ -392,7 +392,7 @@ namespace MainClient
         /// <param name="task"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        private async Task ConsumerAsync(int consumerId, JsonNode task, CancellationToken token)
+        private async Task ConsumerAsync(int consumerId, JToken task, CancellationToken token)
         {
             try
             {
@@ -568,7 +568,7 @@ namespace MainClient
 
         private async Task<bool> ExecuteTaskByCefClientAsync(
            ConsumerTaskContext ctx,
-           JsonNode rawTask,
+           JToken rawTask,
            int consumerId,
            CancellationToken token)
         {
@@ -997,9 +997,9 @@ namespace MainClient
             }
         }
 
-        private JsonObject BuildStartPayload(ConsumerTaskContext ctx, JsonNode task)
+        private JObject BuildStartPayload(ConsumerTaskContext ctx, JToken task)
         {
-            return new JsonObject
+            return new JObject
             {
                 ["taskId"] = ctx.UniqueId,
                 ["taskTitle"] = ctx.TaskTitle ?? "",
@@ -1009,10 +1009,10 @@ namespace MainClient
             };
         }
 
-        private JsonObject BuildRunBrowserPayload(
+        private JObject BuildRunBrowserPayload(
             ConsumerTaskContext ctx,
-            JsonNode taskObj,
-            JsonNode devObj,
+            JToken taskObj,
+            JToken devObj,
             int consumerId,
             int uvIndex)
         {
@@ -1031,7 +1031,7 @@ namespace MainClient
                 url = UrlHelper.URLMacroReplacement(url, ctx.RealIp, taskObj, devObj, ctx.OS, _appSettings, timestamp);
 
 
-            return new JsonObject
+            return new JObject
             {
                 ["taskId"] = ctx.UniqueId,
                 ["taskTitle"] = ctx.TaskTitle ?? "",
@@ -1068,9 +1068,9 @@ namespace MainClient
         /// </summary>
         /// <param name="task"></param>
         /// <returns></returns>
-        private ParseTaskResult ParseTask(JsonNode task)
+        private ParseTaskResult ParseTask(JToken task)
         {
-            if (task is not JsonObject taskObj)
+            if (task is not JObject taskObj)
                 return new ParseTaskResult { Success = false };
 
             var taskIdToken = taskObj["id"];
@@ -1104,14 +1104,14 @@ namespace MainClient
             };
         }
 
-        private static string GetFirstString(JsonNode? node)
+        private static string GetFirstString(JToken? node)
         {
             if (node == null)
                 return string.Empty;
 
             try
             {
-                if (node is JsonArray array)
+                if (node is JArray array)
                 {
                     return array.FirstOrDefault()?.GetValue<string>() ?? string.Empty;
                 }
@@ -1191,7 +1191,7 @@ namespace MainClient
         /// <param name="task"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        private async Task PrepareProxyContextAsync(ConsumerTaskContext ctx, JsonNode task, CancellationToken token)
+        private async Task PrepareProxyContextAsync(ConsumerTaskContext ctx, JToken task, CancellationToken token)
         {
             ctx.ProxyServer = null;
             ctx.RealIp = string.Empty;
@@ -1221,7 +1221,7 @@ namespace MainClient
         /// <param name="token"></param>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
-        private async Task PrepareRemoteProxyAsync(ConsumerTaskContext ctx, JsonNode task, CancellationToken token)
+        private async Task PrepareRemoteProxyAsync(ConsumerTaskContext ctx, JToken task, CancellationToken token)
         {
             const int maxRetry = 10;
 
@@ -1395,19 +1395,19 @@ namespace MainClient
                 result.SuccessUrl.Equals("http://117.21.200.221/api/dash/ipinfo.php") ||
                 result.SuccessUrl.Equals("http://211.154.24.179:9000/api/dash/ipinfo.php"))
             {
-                ctx.IpInfo = JsonNode.Parse(result.Data)?.AsObject();
+                ctx.IpInfo = JToken.Parse(result.Data) as JObject;
                 ctx.RealIp = ctx.IpInfo["query"]?.GetValue<string>() ?? string.Empty;
             }
             else
             {
-                var ipJson = JsonNode.Parse(result.Data)?.AsObject();
+                var ipJson = JToken.Parse(result.Data) as JObject;
 
                 if (ipJson?.ContainsKey("query") == true)
                     ctx.RealIp = ipJson["query"]?.GetValue<string>() ?? string.Empty;
                 if (string.IsNullOrWhiteSpace(ctx.RealIp) && ipJson?.ContainsKey("ip") == true)
                     ctx.RealIp = ipJson["ip"]?.GetValue<string>() ?? string.Empty;
 
-                ctx.IpInfo = new JsonObject
+                ctx.IpInfo = new JObject
                 {
                     ["query"] = ctx.RealIp
                 };
@@ -1423,7 +1423,7 @@ namespace MainClient
         /// <param name="uvIndex"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        private async Task<JsonNode?> GetDeviceForTaskAsync(OSType os, int taskId, int uvIndex, CancellationToken token)
+        private async Task<JToken?> GetDeviceForTaskAsync(OSType os, int taskId, int uvIndex, CancellationToken token)
         {
             for (int retry = 0; retry < 5; retry++)
             {
@@ -1446,7 +1446,7 @@ namespace MainClient
         /// </summary>
         /// <param name="dev"></param>
         /// <param name="os"></param>
-        private void NormalizeDevice(JsonNode dev, OSType os)
+        private void NormalizeDevice(JToken dev, OSType os)
         {
             var ua = dev["ua"]?.GetValue<string>() ?? string.Empty;
 
@@ -1475,11 +1475,11 @@ namespace MainClient
         /// <param name="consumerId"></param>
         /// <param name="uvIndex"></param>
         /// <returns></returns>
-        private JsonObject BuildPluginArgs(ConsumerTaskContext ctx, JsonNode task, JsonNode dev, int consumerId, int uvIndex)
+        private JObject BuildPluginArgs(ConsumerTaskContext ctx, JToken task, JToken dev, int consumerId, int uvIndex)
         {
             var cacheName = $"s{consumerId}_{uvIndex + 1}";
 
-            var args = new JsonObject
+            var args = new JObject
             {
                 ["task"] = task.DeepClone(),
                 ["dev"] = dev.DeepClone(),
@@ -1504,7 +1504,7 @@ namespace MainClient
         {
             int capacity = Math.Max(1, _appSettings.Multiple * _appSettings.MaximumConcurrency);
             int consumerCount = Math.Max(1, _appSettings.MaximumConcurrency);
-            _pipeline = new PipelineRunner<JsonNode>(
+            _pipeline = new PipelineRunner<JToken>(
                 capacity,
                 consumerCount,
                 ProducerAsync,

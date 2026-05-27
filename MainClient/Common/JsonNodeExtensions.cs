@@ -1,10 +1,10 @@
-using System.Text.Json.Nodes;
+using Newtonsoft.Json.Linq;
 
 namespace MainClient.Common
 {
-    public static class JsonNodeExtensions
+    public static class JTokenExtensions
     {
-        public static JsonNode? SelectToken(this JsonNode? node, string path)
+        public static JToken? SelectToken(this JToken? node, string path)
         {
             if (node is null || string.IsNullOrWhiteSpace(path))
                 return node;
@@ -14,8 +14,8 @@ namespace MainClient.Common
             {
                 current = current switch
                 {
-                    JsonObject obj => obj[segment],
-                    JsonArray arr when int.TryParse(segment, out var index) && index >= 0 && index < arr.Count => arr[index],
+                    JObject obj => obj[segment],
+                    JArray arr when int.TryParse(segment, out var index) && index >= 0 && index < arr.Count => arr[index],
                     _ => null
                 };
 

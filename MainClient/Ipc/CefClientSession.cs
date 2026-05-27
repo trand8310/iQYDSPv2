@@ -6,7 +6,7 @@ namespace MainClient.Ipc
     using System.IO.Pipes;
     using System.Text;
     using System.Text.Json;
-    using System.Text.Json.Nodes;
+    using Newtonsoft.Json.Linq;
     using System.Collections.Concurrent;
 
 
@@ -174,7 +174,7 @@ namespace MainClient.Ipc
             }
         }
 
-        public async Task StartTaskAsync(string taskId, JsonNode? payload, CancellationToken cancellationToken = default)
+        public async Task StartTaskAsync(string taskId, JToken? payload, CancellationToken cancellationToken = default)
         {
             var resp = await SendAndWaitAsync(
                 new PipeEnvelope
@@ -214,7 +214,7 @@ namespace MainClient.Ipc
         public async Task CreateBrowserNoWaitAsync(
             string taskId,
             string browserId,
-            JsonNode? payload,
+            JToken? payload,
             CancellationToken cancellationToken = default)
         {
             await SendAsync(
@@ -231,7 +231,7 @@ namespace MainClient.Ipc
         public async Task<BrowserRunResponse> RunBrowserAsync(
             string taskId,
             string browserId,
-            JsonNode? payload,
+            JToken? payload,
             CancellationToken cancellationToken = default)
         {
             var resp = await SendAndWaitAsync(
@@ -257,7 +257,7 @@ namespace MainClient.Ipc
         public async Task RunBrowserNoWaitAsync(
             string taskId,
             string browserId,
-            JsonNode? payload,
+            JToken? payload,
             CancellationToken cancellationToken = default)
         {
             await SendAsync(
