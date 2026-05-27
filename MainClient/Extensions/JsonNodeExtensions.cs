@@ -1,13 +1,13 @@
 using System.Text.Json;
-using System.Text.Json.Nodes;
+using Newtonsoft.Json.Linq;
 
 
 namespace MainClient.Extensions;
 
 
-internal static class JsonNodeExtensions
+internal static class JTokenExtensions
 {
-    public static T? Value<T>(this JsonNode? node)
+    public static T? Value<T>(this JToken? node)
     {
         if (node is null)
         {
@@ -25,22 +25,22 @@ internal static class JsonNodeExtensions
     }
 
 
-    public static IEnumerable<JsonNode> Children(this JsonNode? node)
+    public static IEnumerable<JToken> Children(this JToken? node)
     {
-        if (node is JsonArray arr)
+        if (node is JArray arr)
         {
             return arr.Where(x => x is not null).Select(x => x!);
         }
 
-        if (node is JsonObject obj)
+        if (node is JObject obj)
         {
             return obj.Select(x => x.Value).Where(x => x is not null).Select(x => x!);
         }
 
-        return Enumerable.Empty<JsonNode>();
+        return Enumerable.Empty<JToken>();
     }
 
-    public static JsonNode? SelectToken(this JsonNode? node, string path)
+    public static JToken? SelectToken(this JToken? node, string path)
     {
         if (node is null || string.IsNullOrWhiteSpace(path))
         {
@@ -55,13 +55,13 @@ internal static class JsonNodeExtensions
                 return null;
             }
 
-            if (current is JsonArray arr && int.TryParse(raw, out var idx))
+            if (current is JArray arr && int.TryParse(raw, out var idx))
             {
                 current = idx >= 0 && idx < arr.Count ? arr[idx] : null;
                 continue;
             }
 
-            if (current is JsonObject obj)
+            if (current is JObject obj)
             {
                 current = obj[raw];
                 continue;
