@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
-using System.Text.Json.Nodes;
+using Newtonsoft.Json.Linq;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net;
@@ -20,7 +20,7 @@ namespace MainClient.Common
     public class IpEntity
     {
         public string value { get; set; } = string.Empty;
-        public JsonNode json { get; set; }
+        public JToken json { get; set; }
         public IPFormat format { get; set; } = IPFormat.TXT;
     }
 
@@ -28,32 +28,32 @@ namespace MainClient.Common
 
     public class IpHelper
     {
-        private static JsonArray region_1;
-        private static JsonArray region_2;
-        private static JsonArray region_3;
-        private static JsonArray region_4_1;
-        private static JsonArray region_4_2;
-        private static JsonArray region_ipzan;
-        private static JsonArray region_51dail;
-        private static JsonArray region_shenlong;
+        private static JArray region_1;
+        private static JArray region_2;
+        private static JArray region_3;
+        private static JArray region_4_1;
+        private static JArray region_4_2;
+        private static JArray region_ipzan;
+        private static JArray region_51dail;
+        private static JArray region_shenlong;
 
         static string[] delimiters = { "\r", "\n", System.Environment.NewLine };
         static SemaphoreSlim _mutex = new SemaphoreSlim(1);
         static IpHelper()
         {
-            region_1 = JsonNode.Parse(Properties.Resources.region_1)?.AsArray() ?? new JsonArray();
-            region_2 = JsonNode.Parse(Properties.Resources.region_2)?.AsArray() ?? new JsonArray();
-            region_3 = JsonNode.Parse(Properties.Resources.region_3)?.AsArray() ?? new JsonArray();
-            region_4_1 = JsonNode.Parse(Properties.Resources.region_4_1)?.AsArray() ?? new JsonArray();
-            region_4_2 = JsonNode.Parse(Properties.Resources.region_4_2)?.AsArray() ?? new JsonArray();
-            region_ipzan = JsonNode.Parse(Properties.Resources.region_ipzan)?.AsArray() ?? new JsonArray();
-            region_51dail = JsonNode.Parse(Properties.Resources.region_51daili)?.AsArray() ?? new JsonArray();
-            region_shenlong = JsonNode.Parse(Properties.Resources.region_shenlong)?.AsArray() ?? new JsonArray();
+            region_1 = JToken.Parse(Properties.Resources.region_1) as JArray ?? new JArray();
+            region_2 = JToken.Parse(Properties.Resources.region_2) as JArray ?? new JArray();
+            region_3 = JToken.Parse(Properties.Resources.region_3) as JArray ?? new JArray();
+            region_4_1 = JToken.Parse(Properties.Resources.region_4_1) as JArray ?? new JArray();
+            region_4_2 = JToken.Parse(Properties.Resources.region_4_2) as JArray ?? new JArray();
+            region_ipzan = JToken.Parse(Properties.Resources.region_ipzan) as JArray ?? new JArray();
+            region_51dail = JToken.Parse(Properties.Resources.region_51daili) as JArray ?? new JArray();
+            region_shenlong = JToken.Parse(Properties.Resources.region_shenlong) as JArray ?? new JArray();
         }
 
-        private static JsonNode? FindMaxCodeNodeByName(JsonArray source, string nameKey, string codeKey, string keyword)
+        private static JToken? FindMaxCodeNodeByName(JArray source, string nameKey, string codeKey, string keyword)
         {
-            JsonNode? best = null;
+            JToken? best = null;
             long bestCode = long.MinValue;
 
             foreach (var node in source)
@@ -79,9 +79,9 @@ namespace MainClient.Common
             return best;
         }
 
-        private static JsonNode? FindCityByName(JsonNode? provinceNode, string cityKeyword)
+        private static JToken? FindCityByName(JToken? provinceNode, string cityKeyword)
         {
-            if (provinceNode?["mallCityList"] is not JsonArray cityList)
+            if (provinceNode?["mallCityList"] is not JArray cityList)
                 return null;
 
             foreach (var city in cityList)
@@ -105,7 +105,7 @@ namespace MainClient.Common
 
 
         private static ConcurrentQueue<IpEntity> ipQueues = new ConcurrentQueue<IpEntity>();
-        public async Task<IpEntity> GetProxyIpAsync(JsonNode task, int count = 0)
+        public async Task<IpEntity> GetProxyIpAsync(JToken task, int count = 0)
         {
             if (ipQueues.TryDequeue(out var value))
             {
@@ -134,7 +134,7 @@ namespace MainClient.Common
                         }
                         else if (iPFormat == IPFormat.JSON)
                         {
-                            var json = JsonNode.Parse(content)?.AsObject();
+                            var json = JToken.Parse(content) as JObject;
                             if (url.Contains("service.ipzan.com"))
                             {
                                 foreach (var data in json.SelectToken("data.list").Children())
@@ -177,7 +177,7 @@ namespace MainClient.Common
 
 
 
-        private string GetIpUrl(JsonNode task, out IPFormat format, int count = 0)
+        private string GetIpUrl(JToken task, out IPFormat format, int count = 0)
         {
             format = IPFormat.TXT;
             var url = _appSettings.ProxyIpUrl.Trim();

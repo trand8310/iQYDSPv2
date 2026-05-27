@@ -1,8 +1,9 @@
 ﻿using MainClient.Infrastructure;
+using MainClient.Extensions;
 using MainClient.Models;
 using Microsoft.Extensions.Logging;
 using System.Collections.Specialized;
-using System.Text.Json.Nodes;
+using Newtonsoft.Json.Linq;
 using System.Web;
 
 namespace MainClient.Common
@@ -19,7 +20,7 @@ namespace MainClient.Common
         /// <param name="dev"></param>
         /// <param name="os"></param>
         /// <returns></returns>
-        public static string URLMacroReplacement(string url, string ip, JsonNode task, JsonNode dev, OSType os, AppSettings appSettings, long timestamp = 0)
+        public static string URLMacroReplacement(string url, string ip, JToken task, JToken dev, OSType os, AppSettings appSettings, long timestamp = 0)
         {
             string domain = new Uri(url).Host;
             if (domain.Contains("miaozhen.com"))
@@ -57,7 +58,7 @@ namespace MainClient.Common
         /// <param name="os"></param>
         /// <param name="dev"></param>
         /// <returns></returns>
-        private static string miaozhen(string url, string ip, JsonNode task, JsonNode dev, OSType os, AppSettings appSettings, long timestamp = 0)
+        private static string miaozhen(string url, string ip, JToken task, JToken dev, OSType os, AppSettings appSettings, long timestamp = 0)
         {
             if (timestamp == 0)
                 timestamp = CommonHelper.UnixTimeNowSecond();
@@ -171,7 +172,7 @@ namespace MainClient.Common
         /// <param name="os"></param>
         /// <param name="dev"></param>
         /// <returns></returns>
-        private static string gridsumdissector(string url, string ip, JsonNode task, JsonNode dev, OSType os, AppSettings appSettings, long timestamp = 0)
+        private static string gridsumdissector(string url, string ip, JToken task, JToken dev, OSType os, AppSettings appSettings, long timestamp = 0)
         {
             //https://i.gridsumdissector.com/v/?gscmd=impress&gid=gad_155_Y9RU7SQW&os=__OS__&if=__IDFA__&oid=__OPENUDID__&aid=__ANDROIDID__&im=__IMEI__&oa=__OAID__&m=__MAC__&ip=__IP__&ts=__TS__&did=__DUID__&aaid=__AAID__&uid=__UDID__&odin=__ODIN__&ua=__UA__&lbs=__LBS__
 
@@ -281,7 +282,7 @@ namespace MainClient.Common
         /// <param name="os"></param>
         /// <param name="dev"></param>
         /// <returns></returns>
-        private static string ipinyou(string url, string ip, JsonNode task, JsonNode dev, OSType os, AppSettings appSettings, long timestamp = 0)
+        private static string ipinyou(string url, string ip, JToken task, JToken dev, OSType os, AppSettings appSettings, long timestamp = 0)
         {
             //http://vt.ipinyou.com/IinK3066gI5vwOkVZ-.IcX5R_.sWLZhPIi7pbkvccpO3kUXEe5DrZWFlJbrDuAyySZ_T8kzY9epmcXfrEv_RzyW4f.txHx607mbPPtH8cJVys8k_?tmp=[timestamp]&mob_idfa=[idfa]&mob_imei=[imei]&mob_android=[androidid]&mob_os=[os]&mob_oaid=[oaid]&mob_mac=[mac]
 
@@ -358,7 +359,7 @@ namespace MainClient.Common
         /// <param name="os"></param>
         /// <param name="dev"></param>
         /// <returns></returns>
-        private static string dmpghac(string url, string ip, JsonNode task, JsonNode dev, OSType os, AppSettings appSettings, long timestamp = 0)
+        private static string dmpghac(string url, string ip, JToken task, JToken dev, OSType os, AppSettings appSettings, long timestamp = 0)
         {
             if (timestamp == 0)
                 timestamp = CommonHelper.UnixTimeNowSecond();
@@ -434,7 +435,7 @@ namespace MainClient.Common
             return url;
         }
 
-        private static string mafengwo(string url, string ip, JsonNode task, JsonNode dev, OSType os, AppSettings appSettings, long timestamp = 0)
+        private static string mafengwo(string url, string ip, JToken task, JToken dev, OSType os, AppSettings appSettings, long timestamp = 0)
         {
             if (timestamp == 0)
                 timestamp = CommonHelper.UnixTimeNowSecond();

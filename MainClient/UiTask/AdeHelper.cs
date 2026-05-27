@@ -9,7 +9,7 @@ using System.Collections.Concurrent;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Nodes;
+using Newtonsoft.Json.Linq;
 
 
 namespace MainClient.UiTask;
@@ -68,8 +68,8 @@ public class AdeHelper
     }
 
     #region 系统设备
-    private static ConcurrentQueue<JsonNode> ANDROID_QUEUE = new();
-    private static ConcurrentQueue<JsonNode> iOS_QUEUE = new();
+    private static ConcurrentQueue<JToken> ANDROID_QUEUE = new();
+    private static ConcurrentQueue<JToken> iOS_QUEUE = new();
     private readonly SemaphoreSlim iOS_SIGNAL = new(1, 1);
     private readonly SemaphoreSlim ANDROID_SIGNAL = new(1, 1);
     private async Task<string?> GetDevByOSInternal(OSType os, int count)
@@ -96,9 +96,9 @@ public class AdeHelper
         }
         return null;
     }
-    public async Task<JsonNode?> GetDevByOS(OSType os, int count = 5)
+    public async Task<JToken?> GetDevByOS(OSType os, int count = 5)
     {
-        (ConcurrentQueue<JsonNode> devs, SemaphoreSlim sem) =
+        (ConcurrentQueue<JToken> devs, SemaphoreSlim sem) =
             os == OSType.IOS ?
             (iOS_QUEUE, iOS_SIGNAL) :
             (ANDROID_QUEUE, ANDROID_SIGNAL);
@@ -119,13 +119,13 @@ public class AdeHelper
             {
                 return null;
             }
-            var json = JsonNode.Parse(text);
-            var data = json["data"] as JsonArray;
+            var json = JToken.Parse(text);
+            var data = json["data"] as JArray;
             if (data == null || data.Count == 0)
             {
                 return null;
             }
-            JsonNode first = data[0];
+            JToken first = data[0];
             for (int i = 1; i < data.Count; i++)
             {
                 devs.Enqueue(data[i]);
@@ -153,10 +153,10 @@ public class AdeHelper
             _ => OSType.ANDROID
         };
     }
-    public async Task<JsonNode?> GetDeviceAsync(OSType os, int count)
+    public async Task<JToken?> GetDeviceAsync(OSType os, int count)
     {
         int retry = 0;
-        JsonNode? dev = null;
+        JToken? dev = null;
         while (retry++ < 5)
         {
             dev = await GetDevByOS(os, count);
@@ -176,7 +176,7 @@ public class AdeHelper
     /// <param name="metrics">指标字典，例如 start, dsp, click, success</param>
     /// <param name="token">取消令牌</param>
     /// <returns></returns>
-    public async Task<JsonNode?> UpdateTaskStateAsync(int taskId, Dictionary<string, long> metrics, CancellationToken token = default)
+    public async Task<JToken?> UpdateTaskStateAsync(int taskId, Dictionary<string, long> metrics, CancellationToken token = default)
     {
         return null;
         try
@@ -196,7 +196,7 @@ public class AdeHelper
             using var content = new StringContent(postData, Encoding.UTF8, "application/json");
             using var response = await client.PostAsync(builder.ToString(), content, token);
             response.EnsureSuccessStatusCode();
-            return JsonNode.Parse(await response.Content.ReadAsStringAsync(token))?.AsObject();
+            return JToken.Parse(await response.Content.ReadAsStringAsync(token)) as JObject;
         }
         catch (OperationCanceledException)
         {
@@ -216,7 +216,7 @@ public class AdeHelper
     /// <param name="taskId"></param>
     /// <param name="token"></param>
     /// <returns></returns>
-    public async Task<JsonNode?> GetTaskStatusAsync(int taskId, CancellationToken token = default)
+    public async Task<JToken?> GetTaskStatusAsync(int taskId, CancellationToken token = default)
     {
         try
         {
@@ -224,7 +224,7 @@ public class AdeHelper
             var baseUrl = new Uri(_appSettings.TaskApiUrl).GetLeftPart(UriPartial.Authority);
             using var response = await client.GetAsync($"{baseUrl}/api{_apiVersion}/task-status.php?action=task_status&id={taskId}&host={System.Web.HttpUtility.UrlEncode(host)}&_t={System.DateTime.Now.Ticks}", token);
             response.EnsureSuccessStatusCode();
-            return JsonNode.Parse(await response.Content.ReadAsStringAsync(token))?.AsObject();
+            return JToken.Parse(await response.Content.ReadAsStringAsync(token)) as JObject;
         }
         catch (OperationCanceledException)
         {
@@ -261,7 +261,7 @@ public class AdeHelper
     /// <param name="metrics"></param>
     /// <param name="token"></param>
     /// <returns></returns>
-    public async Task<JsonNode?> UpdateHostStateAsync(Dictionary<string, long> metrics, CancellationToken token = default)
+    public async Task<JToken?> UpdateHostStateAsync(Dictionary<string, long> metrics, CancellationToken token = default)
     {
         metrics ??= new Dictionary<string, long>();
         string wordName = "default";
@@ -287,7 +287,7 @@ public class AdeHelper
             using var response = await client.PostAsync(builder.ToString(), content, token);
             response.EnsureSuccessStatusCode();
             var resp = await response.Content.ReadAsStringAsync(token);
-            return JsonNode.Parse(resp)?.AsObject();
+            return JToken.Parse(resp) as JObject;
         }
         catch (OperationCanceledException)
         {
@@ -306,7 +306,7 @@ public class AdeHelper
     /// </summary>
     /// <param name="token"></param>
     /// <returns></returns>
-    public async Task<JsonNode?> GetHostTodayStatusAsync(CancellationToken token = default)
+    public async Task<JToken?> GetHostTodayStatusAsync(CancellationToken token = default)
     {
         var host = await CommonHelper.GetLocalHostAsync();
         try
@@ -314,7 +314,7 @@ public class AdeHelper
             var baseUrl = new Uri(_appSettings.TaskApiUrl).GetLeftPart(UriPartial.Authority);
             using var response = await client.GetAsync($"{baseUrl}/api{_apiVersion}/task-status.php?action=host_today_status&host={System.Web.HttpUtility.UrlEncode(host)}&_t={System.DateTime.Now.Ticks}", token);
             response.EnsureSuccessStatusCode();
-            return JsonNode.Parse(await response.Content.ReadAsStringAsync(token))?.AsObject();
+            return JToken.Parse(await response.Content.ReadAsStringAsync(token)) as JObject;
         }
         catch (OperationCanceledException)
         {
@@ -332,7 +332,7 @@ public class AdeHelper
     /// </summary>
     /// <param name="token"></param>
     /// <returns></returns>
-    public async Task<JsonNode?> GetHostHourStatusAsync(CancellationToken token = default)
+    public async Task<JToken?> GetHostHourStatusAsync(CancellationToken token = default)
     {
         var host = await CommonHelper.GetLocalHostAsync();
         try
@@ -340,7 +340,7 @@ public class AdeHelper
             var baseUrl = new Uri(_appSettings.TaskApiUrl).GetLeftPart(UriPartial.Authority);
             using var response = await client.GetAsync($"{baseUrl}/api{_apiVersion}/task-status.php?action=host_hour_status&host={System.Web.HttpUtility.UrlEncode(host)}&_t={System.DateTime.Now.Ticks}", token);
             response.EnsureSuccessStatusCode();
-            return JsonNode.Parse(await response.Content.ReadAsStringAsync(token))?.AsObject();
+            return JToken.Parse(await response.Content.ReadAsStringAsync(token)) as JObject;
         }
         catch (OperationCanceledException)
         {
@@ -356,7 +356,7 @@ public class AdeHelper
     #endregion
 
     #region 代理状态统计&更新
-    public async Task<JsonNode?> UpdateProxyIpStateAsync(int taskId, Dictionary<string, long> metrics, IEnumerable<string> ips, CancellationToken token = default)
+    public async Task<JToken?> UpdateProxyIpStateAsync(int taskId, Dictionary<string, long> metrics, IEnumerable<string> ips, CancellationToken token = default)
     {
         try
         {
@@ -376,7 +376,7 @@ public class AdeHelper
             using var content = new StringContent(postData, Encoding.UTF8, "application/json");
             using var response = await client.PostAsync(builder.ToString(), content, token);
             response.EnsureSuccessStatusCode();
-            return JsonNode.Parse(await response.Content.ReadAsStringAsync(token))?.AsObject();
+            return JToken.Parse(await response.Content.ReadAsStringAsync(token)) as JObject;
         }
         catch (OperationCanceledException)
         {

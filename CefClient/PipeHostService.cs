@@ -23,7 +23,7 @@ public sealed class PipeHostService : IAsyncDisposable
     private readonly ConcurrentDictionary<string, Task> _runTasks = new();
 
     private string? _taskId;
-    private System.Text.Json.Nodes.JsonNode? _taskPayload;
+    private JToken? _taskPayload;
 
     public PipeHostService(string pipeName, MainForm mainForm)
     {
@@ -188,7 +188,7 @@ public sealed class PipeHostService : IAsyncDisposable
             try
             {
                 await _mainForm.RemoveBrowserFastAsync(browserId);
-                var dataObj = result.Data as System.Text.Json.Nodes.JsonObject ?? new System.Text.Json.Nodes.JsonObject();
+                var dataObj = result.Data as System.Text.Json.Nodes.JObject ?? new System.Text.Json.Nodes.JObject();
                 dataObj["removedByCefClient"] = true;
                 result.Data = dataObj;
                 await SendBrowserStatusAsync(
@@ -201,7 +201,7 @@ public sealed class PipeHostService : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                var dataObj = result.Data as System.Text.Json.Nodes.JsonObject ?? new System.Text.Json.Nodes.JsonObject();
+                var dataObj = result.Data as System.Text.Json.Nodes.JObject ?? new System.Text.Json.Nodes.JObject();
                 dataObj["removedByCefClient"] = false;
                 dataObj["removeError"] = ex.Message;
                 result.Data = dataObj;
@@ -301,9 +301,9 @@ public sealed class PipeHostService : IAsyncDisposable
         bool success,
         string message,
         CancellationToken cancellationToken,
-        System.Text.Json.Nodes.JsonNode? data = null)
+        JToken? data = null)
     {
-        var statusData = data as System.Text.Json.Nodes.JsonObject ?? new System.Text.Json.Nodes.JsonObject();
+        var statusData = data as System.Text.Json.Nodes.JObject ?? new System.Text.Json.Nodes.JObject();
         statusData["stage"] = stage;
 
         await SendAsync(new PipeEnvelope

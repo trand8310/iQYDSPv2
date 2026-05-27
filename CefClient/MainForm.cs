@@ -9,7 +9,7 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
-using System.Text.Json.Nodes;
+using Newtonsoft.Json.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -43,7 +43,7 @@ namespace CefClient
         public async Task<bool> CreateBrowserAsync(
             string taskId,
             string browserId,
-            System.Text.Json.Nodes.JsonNode? payload,
+            JToken? payload,
             CancellationToken cancellationToken = default)
         {
             var createLock = _createLocks.GetOrAdd(browserId, _ => new SemaphoreSlim(1, 1));
@@ -136,7 +136,7 @@ namespace CefClient
 
         public async Task<BrowserRunResult> RunBrowserAsync(
             string browserId,
-            System.Text.Json.Nodes.JsonNode? payload,
+            JToken? payload,
             CancellationToken cancellationToken = default,
             Func<BrowserRunStatus, CancellationToken, Task>? statusChanged = null)
         {

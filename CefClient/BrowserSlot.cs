@@ -10,7 +10,7 @@ namespace CefClient
     using System.Diagnostics;
     using System.Globalization;
     using System.Net;
-    using System.Text.Json.Nodes;
+    using Newtonsoft.Json.Linq;
 
     public sealed class BrowserSlot : IAsyncDisposable
     {
@@ -106,7 +106,7 @@ namespace CefClient
 
 
         public async Task<BrowserRunResult> RunAsync(
-            JsonNode? payload,
+            JToken? payload,
             CancellationToken cancellationToken = default,
             Func<BrowserRunStatus, CancellationToken, Task>? statusChanged = null)
         {
@@ -405,7 +405,7 @@ namespace CefClient
         }
 
 
-        private JsonObject BuildRunData(
+        private JObject BuildRunData(
             string? url,
             string? referer,
             int sleepDelayMs,
@@ -437,7 +437,7 @@ namespace CefClient
             string? platform = null,
             string? userAgent = null)
         {
-            var data = new JsonObject
+            var data = new JObject
             {
                 ["url"] = url ?? string.Empty,
                 ["referer"] = referer ?? string.Empty,
@@ -504,7 +504,7 @@ namespace CefClient
         }
 
         private async Task<ProxyConfigurationInfo> ConfigureProxyAsync(
-            JsonNode? payload,
+            JToken? payload,
             Func<string, Task> publishLogAsync,
             CancellationToken cancellationToken)
         {
@@ -536,7 +536,7 @@ namespace CefClient
         }
 
         private async Task<DeviceConfigurationInfo> ConfigureMobileEmulationAsync(
-            JsonNode? payload,
+            JToken? payload,
             Func<string, Task> publishLogAsync,
             CancellationToken cancellationToken)
         {
@@ -776,12 +776,12 @@ namespace CefClient
             bool success,
             string message,
             CancellationToken cancellationToken,
-            JsonNode? data = null)
+            JToken? data = null)
         {
             if (statusChanged == null)
                 return;
 
-            var statusData = data?.DeepClone() as JsonObject ?? new JsonObject();
+            var statusData = data?.DeepClone() as JObject ?? new JObject();
             statusData["stage"] = stage;
             statusData["browserId"] = BrowserId;
 
@@ -886,7 +886,7 @@ namespace CefClient
             return tcs.Task;
         }
 
-        private static int GetSleepDelayMilliseconds(JsonNode? task)
+        private static int GetSleepDelayMilliseconds(JToken? task)
         {
             var sleepText = GetNodeText(task?["sleep"]);
             if (string.IsNullOrWhiteSpace(sleepText))
@@ -921,7 +921,7 @@ namespace CefClient
             return seconds > int.MaxValue / 1000 ? int.MaxValue : seconds * 1000;
         }
 
-        private static string GetString(JsonNode? payload, string name, string defaultValue = "")
+        private static string GetString(JToken? payload, string name, string defaultValue = "")
         {
             var node = payload?[name];
             if (node == null)
@@ -929,7 +929,7 @@ namespace CefClient
 
             try
             {
-                if (node is JsonArray array)
+                if (node is JArray array)
                     return array.FirstOrDefault()?.GetValue<string>() ?? defaultValue;
 
                 return node.GetValue<string>() ?? defaultValue;
@@ -940,7 +940,7 @@ namespace CefClient
             }
         }
 
-        private static string GetNodeText(JsonNode? node)
+        private static string GetNodeText(JToken? node)
         {
             if (node == null)
                 return string.Empty;
@@ -955,7 +955,7 @@ namespace CefClient
             }
         }
 
-        private static bool GetBool(JsonNode? payload, string name, bool defaultValue)
+        private static bool GetBool(JToken? payload, string name, bool defaultValue)
         {
             try
             {
@@ -967,19 +967,19 @@ namespace CefClient
             }
         }
 
-        private static int GetPositiveInt(JsonNode? payload, string name, int defaultValue)
+        private static int GetPositiveInt(JToken? payload, string name, int defaultValue)
         {
             var value = GetNullableInt(payload, name);
             return value.HasValue && value.Value > 0 ? value.Value : defaultValue;
         }
 
-        private static int GetNonNegativeInt(JsonNode? payload, string name, int defaultValue)
+        private static int GetNonNegativeInt(JToken? payload, string name, int defaultValue)
         {
             var value = GetNullableInt(payload, name);
             return value.HasValue && value.Value >= 0 ? value.Value : defaultValue;
         }
 
-        private static int? GetNullableInt(JsonNode? payload, string name)
+        private static int? GetNullableInt(JToken? payload, string name)
         {
             try
             {
@@ -1084,7 +1084,7 @@ namespace CefClient
         public string Stage { get; set; } = "";
         public bool Success { get; set; }
         public string Message { get; set; } = "";
-        public JsonNode? Data { get; set; }
+        public JToken? Data { get; set; }
     }
 
     public sealed class BrowserRunResult
@@ -1092,6 +1092,6 @@ namespace CefClient
         public string BrowserId { get; set; } = "";
         public bool Success { get; set; }
         public string Message { get; set; } = "";
-        public JsonNode? Data { get; set; }
+        public JToken? Data { get; set; }
     }
 }
